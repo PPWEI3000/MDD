@@ -22,10 +22,10 @@ const styles = `
   }
 `;
 
-// 備用模擬數據
+// 備用模擬數據 (保留 6 碼代號範例供本機預覽確認)
 const fallbackData = [
   { ticker: "VOO", dd2026: -8.9, dd2025: -19.0, dd2022: -25.4 },
-  { ticker: "QQQ", dd2026: -11.5, dd2025: -24.0, dd2022: -36.2 },
+  { ticker: "00675L", dd2026: -14.9, dd2025: -55.2, dd2022: -64.0 }, // 測試 6 碼代號
   { ticker: "MSFT", dd2026: -35.0, dd2025: -17.5, dd2022: -34.4 }
 ].map(item => ({
   ...item,
@@ -195,7 +195,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-900 p-3 sm:p-6 md:p-8 font-sans pb-16 transition-colors duration-300">
       <style>{styles}</style>
       
-      {/* 標題與說明區 (配合 Dark Mode 將文字變亮) */}
+      {/* 標題與說明區 */}
       <div className="max-w-7xl mx-auto mb-6 sm:mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-100 flex items-center gap-2 sm:gap-3">
@@ -214,7 +214,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* 控制區 (配合 Dark Mode 改為深灰色卡片) */}
+      {/* 控制區 */}
       <div className="max-w-7xl mx-auto mb-6 sm:mb-10 bg-slate-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-700">
         <label className="block text-xs sm:text-sm font-bold text-slate-300 mb-2 flex items-center gap-1 sm:gap-2">
           <LinkIcon className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400" />
@@ -244,7 +244,7 @@ export default function App() {
         )}
       </div>
 
-      {/* 標的卡片網格 (維持白底) */}
+      {/* 標的卡片網格 */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
         {data.map((item, index) => (
           <div 
@@ -254,15 +254,16 @@ export default function App() {
             {/* 上半部：標的名稱 (左) 與 目前跌幅區塊 (右) */}
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               
-              {/* 左側：單純顯示英文標的名稱 */}
+              {/* 左側：顯示英文標的名稱
+                  修改：縮小手機版字體 (text-lg sm:text-3xl md:text-4xl)，放寬最大寬度限制 (max-w-[110px])，確保 6 字元完整呈現 */}
               <div className="flex flex-col justify-center">
-                <span className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight truncate max-w-[80px] sm:max-w-[120px]" title={item.ticker}>
+                <span className="text-lg sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight truncate max-w-[110px] sm:max-w-none" title={item.ticker}>
                   {item.ticker.replace('TPE:', '')}
                 </span>
               </div>
               
-              {/* 右側：將 2026 DD% 放大並加深顏色 (text-slate-600) */}
-              <div className="flex flex-col items-end">
+              {/* 右側：2026 DD% 區塊 */}
+              <div className="flex flex-col items-end shrink-0">
                 <span className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-widest mb-0.5">
                   2026 DD%
                 </span>
