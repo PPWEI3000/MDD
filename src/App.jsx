@@ -26,7 +26,7 @@ const styles = `
 const fallbackData = [
   { ticker: "VOO", dd2026: -8.9, dd2025: -19.0, dd2022: -25.4 },
   { ticker: "00675L", dd2026: -14.9, dd2025: -55.2, dd2022: -64.0 }, 
-  { ticker: "GOOGL", dd2026: -12.5, dd2025: -20.0, dd2022: -40.0 }
+  { ticker: "MSFT", dd2026: -35.0, dd2025: -17.5, dd2022: -34.4 }
 ].map(item => ({
   ...item,
   prog25: (item.dd2026 / item.dd2025) * 100,
@@ -62,8 +62,8 @@ const mapProgressToVisualHeight = (p) => {
   return 75 + ((p - 83.3) / (100 - 83.3)) * 25;
 };
 
-// 玻璃球組件
-const GlassSphere = ({ progress, label, type, mdd }) => {
+// 玻璃球組件 (新增 sortMode 屬性以判斷縮放比例)
+const GlassSphere = ({ progress, label, type, mdd, sortMode }) => {
   const [loaded, setLoaded] = useState(false);
   
   useEffect(() => {
@@ -81,8 +81,19 @@ const GlassSphere = ({ progress, label, type, mdd }) => {
   
   const isOverfilled = progress >= 100;
 
+  // 根據目前的排序模式，決定玻璃球的縮放與透明度
+  let containerScaleClass = "scale-100 opacity-100";
+  if (sortMode === 1) {
+    // 依 2025 排序：2025 放大，2022 縮小變暗
+    containerScaleClass = is2025 ? "scale-110 opacity-100 z-10" : "scale-90 opacity-60 grayscale-[20%]";
+  } else if (sortMode === 2) {
+    // 依 2022 排序：2022 放大，2025 縮小變暗
+    containerScaleClass = !is2025 ? "scale-110 opacity-100 z-10" : "scale-90 opacity-60 grayscale-[20%]";
+  }
+
   return (
-    <div className="flex flex-col items-center gap-1 sm:gap-2">
+    // 外層加入 transition 與動態計算的 scale 類別
+    <div className={`flex flex-col items-center gap-1 sm:gap-2 transition-all duration-500 ease-out origin-center ${containerScaleClass}`}>
       <span className={`text-[10px] sm:text-xs font-bold tracking-wider ${titleColor}`}>
         {label}
       </span>
@@ -136,7 +147,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // 新增：排序狀態 (0: 預設, 1: 2025高至低, 2: 2022高至低)
+  // 排序狀態 (0: 預設, 1: 2025高至低, 2: 2022高至低)
   const [sortMode, setSortMode] = useState(0);
 
   useEffect(() => {
@@ -278,7 +289,6 @@ export default function App() {
       {/* 標的卡片網格 */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
         {displayData.map((item, index) => {
-          // 清理名稱並判斷是否為長代號 (大於 4 碼)
           const displayTicker = item.ticker.replace('TPE:', '');
           const isLongTicker = displayTicker.length > 4;
 
@@ -313,10 +323,10 @@ export default function App() {
 
               </div>
 
-              {/* 下半部：並排的玻璃球 */}
+              {/* 下半部：並排的玻璃球 (傳入 sortMode) */}
               <div className="flex gap-2 sm:gap-5 justify-center mt-auto">
-                <GlassSphere progress={item.prog25} label="2025/4" type="2025" mdd={item.dd2025} />
-                <GlassSphere progress={item.prog22} label="2022/10" type="2022" mdd={item.dd2022} />
+                <GlassSphere progress={item.prog25} label="2025/4" type="2025" mdd={item.dd2025} sortMode={sortMode} />
+                <GlassSphere progress={item.prog22} label="2022/10" type="2022" mdd={item.dd2022} sortMode={sortMode} />
               </div>
             </div>
           );
