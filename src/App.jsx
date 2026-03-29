@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Info, Droplets, TrendingDown, Link as LinkIcon, RefreshCw, AlertCircle, ArrowUpDown, X, Check } from 'lucide-react';
+import { Info, Droplets, TrendingDown, Link as LinkIcon, RefreshCw, AlertCircle, ArrowUpDown, X, Check, Target, CircleDollarSign, Crosshair, ListTodo } from 'lucide-react';
 
 // 內嵌 CSS 處理動態波浪與自訂 Checkbox 動畫
 const styles = `
@@ -90,7 +90,6 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
   
   const isOverfilled = progress >= 100;
 
-  // 排序模式動態縮放
   let containerScaleClass = "scale-100 opacity-100";
   if (sortMode === 1) {
     containerScaleClass = is2025 ? "scale-110 opacity-100 z-10" : "scale-90 opacity-60 grayscale-[20%]";
@@ -108,13 +107,10 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
       </span>
       
       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[2.5px] sm:border-[3px] border-slate-700 relative overflow-hidden bg-slate-50 glass-sphere transition-colors duration-500 shadow-md">
-        
-        {/* 等分橫線 */}
         <div className="absolute w-full border-b-[1.5px] border-slate-800/30 z-10" style={{ bottom: '75.0%' }}></div>
         <div className="absolute w-full border-b-[1.5px] border-slate-800/40 z-10" style={{ bottom: '50.0%' }}></div>
         <div className="absolute w-full border-b-[1.5px] border-slate-800/20 z-10" style={{ bottom: '25.0%' }}></div>
 
-        {/* 動態水位容器 */}
         <div 
           className="absolute bottom-0 left-0 w-full transition-all duration-[1500ms] ease-out flex flex-col justify-end z-0"
           style={{ height: loaded ? `${visualHeight}%` : '0%' }}
@@ -123,7 +119,6 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
           <div className={`w-full h-full ${bodyColor} opacity-90`}></div>
         </div>
 
-        {/* 破裂特效 */}
         {isOverfilled && (
           <svg className="absolute inset-0 w-full h-full z-20 pointer-events-none drop-shadow-md" viewBox="0 0 100 100">
             <path d="M 45 0 L 35 25 L 60 50 L 35 75 L 45 100" fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="miter"/>
@@ -133,7 +128,6 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
           </svg>
         )}
 
-        {/* 進度標示 */}
         <div className="absolute inset-0 flex items-center justify-center z-20">
           <span className={`font-black text-sm sm:text-xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] text-white`}>
             {Math.round(progress)}%
@@ -155,6 +149,12 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
   const { ticker, currentPrice, currentDD, baseDD, label } = data;
   const targets = [50, 66.7, 83.3, 100];
   
+  // 決定標籤顏色 (實心淺底 + 深色字)
+  const is2025 = label === '2025/4';
+  const badgeClass = is2025 
+    ? 'bg-blue-100 text-blue-800' 
+    : 'bg-teal-100 text-teal-800';
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="absolute inset-0" onClick={onClose}></div>
@@ -168,24 +168,51 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
         </button>
 
         <div className="pt-8 pb-6 px-6 text-center">
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+          <h2 className="text-3xl font-black text-slate-800 tracking-tight flex items-center justify-center gap-3">
             {ticker.replace('TPE:', '')}
-            <span className="text-sm font-bold text-slate-400 ml-2 align-middle border border-slate-200 px-2 py-1 rounded-md">{label}</span>
+            {/* 實心塗色、深色字體的標籤設計 */}
+            <span className={`text-sm font-black px-3 py-1 rounded-xl shadow-sm tracking-wide ${badgeClass}`}>
+              {label}
+            </span>
           </h2>
-          <p className="text-xl font-medium text-slate-600 mt-2 flex items-center justify-center gap-2">
-            現價 <span className="font-bold text-slate-800">{currentPrice > 0 ? currentPrice.toFixed(2) : 'N/A'}</span>
-          </p>
+          <div className="inline-flex items-center justify-center gap-1.5 mt-4 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
+            <CircleDollarSign className="w-5 h-5 text-amber-500" />
+            <span className="text-sm font-bold text-slate-500 mt-0.5">現價</span>
+            <span className="text-xl font-black text-slate-800 ml-1">
+              {currentPrice > 0 ? currentPrice.toFixed(2) : 'N/A'}
+            </span>
+          </div>
         </div>
 
         <div className="px-6 pb-8">
-          <div className="rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
             <table className="w-full text-sm sm:text-base">
               <thead>
-                <tr className="bg-[#4a6b9c] text-white">
-                  <th className="py-3 px-2 text-center font-bold w-1/4">達成%</th>
-                  <th className="py-3 px-2 text-center font-bold w-1/4">目標跌幅</th>
-                  <th className="py-3 px-2 text-center font-bold w-1/4">目標價</th>
-                  <th className="py-3 px-2 text-center font-bold w-1/4">已完成</th>
+                <tr className="bg-[#4a6b9c] text-white/90 text-xs sm:text-sm tracking-wider">
+                  <th className="py-3 px-2 text-center font-bold w-1/4">
+                    <div className="flex flex-col items-center gap-1">
+                      <Target className="w-4 h-4 text-blue-200" />
+                      達成%
+                    </div>
+                  </th>
+                  <th className="py-3 px-2 text-center font-bold w-1/4">
+                    <div className="flex flex-col items-center gap-1">
+                      <TrendingDown className="w-4 h-4 text-blue-200" />
+                      目標跌幅
+                    </div>
+                  </th>
+                  <th className="py-3 px-2 text-center font-bold w-1/4">
+                    <div className="flex flex-col items-center gap-1">
+                      <Crosshair className="w-4 h-4 text-blue-200" />
+                      目標價
+                    </div>
+                  </th>
+                  <th className="py-3 px-2 text-center font-bold w-1/4">
+                    <div className="flex flex-col items-center gap-1">
+                      <ListTodo className="w-4 h-4 text-blue-200" />
+                      已執行
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-slate-50">
@@ -205,7 +232,7 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
                     <tr key={percent} className={`border-t border-slate-200 transition-colors ${isChecked ? 'bg-blue-50/50' : 'hover:bg-slate-100/50'}`}>
                       <td className="py-3.5 px-2 text-center font-bold text-slate-700">{percent}%</td>
                       <td className="py-3.5 px-2 text-center font-medium text-slate-600">{targetDD.toFixed(1)}%</td>
-                      <td className="py-3.5 px-2 text-center font-bold text-slate-800">
+                      <td className="py-3.5 px-2 text-center font-black text-slate-800 tracking-tight">
                         {targetPrice > 0 ? targetPrice.toFixed(2) : '-'}
                       </td>
                       <td className="py-3.5 px-2 flex justify-center items-center">
@@ -235,8 +262,6 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
 
 
 export default function App() {
-  // 💡 請將下方這段網址替換為您剛剛產生的「網頁應用程式 (Apps Script) 網址」
-  // 若您暫時還沒設定好，也可以放原本的 CSV 網址，系統會自動向下相容處理。
   const defaultUrl = 'https://script.google.com/macros/s/AKfycbzc659ptYc81-Gb24ws_8ZFDzRQ5yks-zmGNxoHFwJH5ZhIamVYHCp7yjZsewE0IMbHEQ/exec';
   
   const [data, setData] = useState(fallbackData);
@@ -279,7 +304,6 @@ export default function App() {
     setError('');
 
     try {
-      // 核心升級：加入時間戳，強制瀏覽器抓取最新資料，徹底解決快取問題
       const separator = urlToFetch.includes('?') ? '&' : '?';
       const noCacheUrl = `${urlToFetch}${separator}t=${new Date().getTime()}`;
       
@@ -290,10 +314,8 @@ export default function App() {
       let rows = [];
       
       try {
-        // 嘗試智慧解析為 JSON (Apps Script 的即時格式)
         rows = JSON.parse(responseText);
       } catch (e) {
-        // 若不是 JSON，向下相容解析原本的 CSV 格式
         const lines = responseText.split('\n').filter(line => line.trim() !== '');
         rows = lines.map(line => parseCSVLine(line));
       }
@@ -307,13 +329,11 @@ export default function App() {
         };
 
         const ticker = values[0];
-        // 支援包含逗號的字串轉換數字 (現價在 Index 1)
         const currentPrice = values[1] ? parseFloat(values[1].toString().replace(/,/g, '')) : 0;
         
-        // 配合新欄位順序，將跌幅的索引值往後遞延
-        const dd2022 = parsePercent(values[6]);  // 原本是 5 -> 現在是 6
-        const dd2025 = parsePercent(values[11]); // 原本是 10 -> 現在是 11
-        const dd2026 = parsePercent(values[16]); // 原本是 15 -> 現在是 16
+        const dd2022 = parsePercent(values[6]); 
+        const dd2025 = parsePercent(values[11]);
+        const dd2026 = parsePercent(values[16]);
 
         return {
           ticker: ticker,
@@ -334,6 +354,43 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 💡 即時計算「下一目標價」(最接近現價且小於現價)
+  const getNextTarget = (item) => {
+    if (!item.currentPrice || item.currentPrice <= 0) return null;
+    
+    // 推算最高點
+    const peak = item.currentPrice / (1 + (item.dd2026 / 100));
+    const percents = [50, 66.7, 83.3, 100];
+    let allTargets = [];
+
+    // 將 2025 與 2022 共 8 個目標價全部算出
+    percents.forEach(p => {
+      if (item.dd2025 < 0) {
+        allTargets.push({
+          type: '2025',
+          percent: p,
+          price: peak * (1 + (item.dd2025 * (p / 100) / 100))
+        });
+      }
+      if (item.dd2022 < 0) {
+        allTargets.push({
+          type: '2022',
+          percent: p,
+          price: peak * (1 + (item.dd2022 * (p / 100) / 100))
+        });
+      }
+    });
+
+    // 由高至低排序 (最接近現價的會在前面)
+    allTargets.sort((a, b) => b.price - a.price);
+
+    // 尋找第一個「小於現價」的目標價
+    const nextTarget = allTargets.find(t => t.price < item.currentPrice);
+    
+    // 如果現價已經跌破所有目標價，或者尚未達到任何目標，做好防呆機制
+    return nextTarget || allTargets[0];
   };
 
   const getSortedData = () => {
@@ -357,7 +414,6 @@ export default function App() {
         onToggleCheck={handleToggleCheck}
       />
 
-      {/* 標題與說明區 */}
       <div className="max-w-7xl mx-auto mb-6 sm:mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-100 flex items-center gap-2 sm:gap-3">
@@ -376,7 +432,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* 控制區 */}
       <div className="max-w-7xl mx-auto mb-6 sm:mb-8 bg-slate-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-700">
         <label className="block text-xs sm:text-sm font-bold text-slate-300 mb-2 flex items-center gap-1 sm:gap-2">
           <LinkIcon className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400" />
@@ -406,7 +461,6 @@ export default function App() {
         )}
       </div>
 
-      {/* 排序按鈕工具列 */}
       <div className="max-w-7xl mx-auto flex justify-end mb-3 sm:mb-4 px-1">
         <button 
           onClick={() => setSortMode(prev => (prev + 1) % 3)}
@@ -419,19 +473,19 @@ export default function App() {
         </button>
       </div>
 
-      {/* 標的卡片網格 */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
         {displayData.map((item, index) => {
           const displayTicker = item.ticker.replace('TPE:', '');
           const isLongTicker = displayTicker.length > 4;
+          // 取得自動算出的「下一目標價」
+          const nextTarget = getNextTarget(item);
 
           return (
             <div 
               key={`${item.ticker}-${index}`}
-              className="bg-white rounded-[1.2rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+              className="bg-white rounded-[1.2rem] sm:rounded-[2rem] p-4 sm:p-5 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
             >
-              {/* 上半部：標的名稱與跌幅 */}
-              <div className="flex justify-between items-center gap-2 mb-4 sm:mb-6">
+              <div className="flex justify-between items-center gap-2 mb-4 sm:mb-5">
                 <div className="flex flex-col justify-center min-w-0">
                   <span 
                     className={`font-black text-slate-800 truncate ${isLongTicker ? 'text-[15px] sm:text-2xl md:text-3xl tracking-tighter' : 'text-lg sm:text-3xl md:text-4xl tracking-tight'}`} 
@@ -452,36 +506,55 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 下半部：可點擊的玻璃球 */}
-              <div className="flex gap-2 sm:gap-5 justify-center mt-auto">
-                <GlassSphere 
-                  progress={item.prog25} 
-                  label="2025/4" 
-                  type="2025" 
-                  mdd={item.dd2025} 
-                  sortMode={sortMode}
-                  onClick={() => setModalData({
-                    ticker: item.ticker,
-                    currentPrice: item.currentPrice,
-                    currentDD: item.dd2026,
-                    baseDD: item.dd2025,
-                    label: '2025/4'
-                  })} 
-                />
-                <GlassSphere 
-                  progress={item.prog22} 
-                  label="2022/10" 
-                  type="2022" 
-                  mdd={item.dd2022} 
-                  sortMode={sortMode}
-                  onClick={() => setModalData({
-                    ticker: item.ticker,
-                    currentPrice: item.currentPrice,
-                    currentDD: item.dd2026,
-                    baseDD: item.dd2022,
-                    label: '2022/10'
-                  })} 
-                />
+              <div className="flex flex-col mt-auto">
+                <div className="flex gap-2 sm:gap-5 justify-center mb-3">
+                  <GlassSphere 
+                    progress={item.prog25} 
+                    label="2025/4" 
+                    type="2025" 
+                    mdd={item.dd2025} 
+                    sortMode={sortMode}
+                    onClick={() => setModalData({
+                      ticker: item.ticker,
+                      currentPrice: item.currentPrice,
+                      currentDD: item.dd2026,
+                      baseDD: item.dd2025,
+                      label: '2025/4'
+                    })} 
+                  />
+                  <GlassSphere 
+                    progress={item.prog22} 
+                    label="2022/10" 
+                    type="2022" 
+                    mdd={item.dd2022} 
+                    sortMode={sortMode}
+                    onClick={() => setModalData({
+                      ticker: item.ticker,
+                      currentPrice: item.currentPrice,
+                      currentDD: item.dd2026,
+                      baseDD: item.dd2022,
+                      label: '2022/10'
+                    })} 
+                  />
+                </div>
+                
+                {/* 💡 下一目標價 橫幅設計 */}
+                {nextTarget && (
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)]">
+                    <div className="flex items-center gap-1.5">
+                      <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-500">下一目標價</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase">
+                        ({nextTarget.type} {nextTarget.percent}%)
+                      </span>
+                      <span className="text-sm sm:text-base font-black text-slate-700 tracking-tight">
+                        {nextTarget.price.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           );
