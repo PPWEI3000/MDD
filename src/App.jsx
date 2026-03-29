@@ -22,10 +22,10 @@ const styles = `
   }
 `;
 
-// 備用模擬數據 (保留 6 碼代號範例供本機預覽確認)
+// 備用模擬數據
 const fallbackData = [
   { ticker: "VOO", dd2026: -8.9, dd2025: -19.0, dd2022: -25.4 },
-  { ticker: "00675L", dd2026: -14.9, dd2025: -55.2, dd2022: -64.0 }, // 測試 6 碼代號
+  { ticker: "00675L", dd2026: -14.9, dd2025: -55.2, dd2022: -64.0 }, 
   { ticker: "MSFT", dd2026: -35.0, dd2025: -17.5, dd2022: -34.4 }
 ].map(item => ({
   ...item,
@@ -251,18 +251,18 @@ export default function App() {
             key={`${item.ticker}-${index}`}
             className="bg-white rounded-[1.2rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
           >
-            {/* 上半部：標的名稱 (左) 與 目前跌幅區塊 (右) */}
-            <div className="flex justify-between items-center mb-4 sm:mb-6">
+            {/* 上半部：標的名稱 (左) 與 目前跌幅區塊 (右) 
+                修改：加入 gap-2 (強制拉開距離)，並加入 min-w-0 防止文字撐破版面 */}
+            <div className="flex justify-between items-center gap-2 mb-4 sm:mb-6">
               
-              {/* 左側：顯示英文標的名稱
-                  修改：縮小手機版字體 (text-lg sm:text-3xl md:text-4xl)，放寬最大寬度限制 (max-w-[110px])，確保 6 字元完整呈現 */}
-              <div className="flex flex-col justify-center">
-                <span className="text-lg sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight truncate max-w-[110px] sm:max-w-none" title={item.ticker}>
+              {/* 左側：確保名稱不會黏到右邊 */}
+              <div className="flex flex-col justify-center min-w-0">
+                <span className="text-lg sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight truncate" title={item.ticker}>
                   {item.ticker.replace('TPE:', '')}
                 </span>
               </div>
               
-              {/* 右側：2026 DD% 區塊 */}
+              {/* 右側：使用 shrink-0 防止數字區塊被壓縮 */}
               <div className="flex flex-col items-end shrink-0">
                 <span className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-widest mb-0.5">
                   2026 DD%
