@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Info, Droplets, TrendingDown, Link as LinkIcon, RefreshCw, AlertCircle } from 'lucide-react';
+import { Info, Droplets, TrendingDown, Link as LinkIcon, RefreshCw, AlertCircle, ArrowUpDown } from 'lucide-react';
 
 // 內嵌 CSS 處理動態波浪
 const styles = `
@@ -26,7 +26,7 @@ const styles = `
 const fallbackData = [
   { ticker: "VOO", dd2026: -8.9, dd2025: -19.0, dd2022: -25.4 },
   { ticker: "00675L", dd2026: -14.9, dd2025: -55.2, dd2022: -64.0 }, 
-  { ticker: "MSFT", dd2026: -35.0, dd2025: -17.5, dd2022: -34.4 }
+  { ticker: "GOOGL", dd2026: -12.5, dd2025: -20.0, dd2022: -40.0 }
 ].map(item => ({
   ...item,
   prog25: (item.dd2026 / item.dd2025) * 100,
@@ -135,6 +135,9 @@ export default function App() {
   const [csvUrl, setCsvUrl] = useState(defaultUrl);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // 新增：排序狀態 (0: 預設, 1: 2025高至低, 2: 2022高至低)
+  const [sortMode, setSortMode] = useState(0);
 
   useEffect(() => {
     fetchAndParseCSV(defaultUrl);
@@ -183,6 +186,8 @@ export default function App() {
       }).filter(item => item.ticker && item.ticker !== '標的');
 
       setData(parsedData);
+      // 載入新資料時，重置為預設排序
+      setSortMode(0);
       
     } catch (err) {
       setError(err.message || '讀取資料時發生錯誤');
@@ -190,6 +195,19 @@ export default function App() {
       setIsLoading(false);
     }
   };
+
+  // 取得排序後的資料
+  const getSortedData = () => {
+    if (sortMode === 1) {
+      return [...data].sort((a, b) => b.prog25 - a.prog25);
+    }
+    if (sortMode === 2) {
+      return [...data].sort((a, b) => b.prog22 - a.prog22);
+    }
+    return data; // sortMode === 0
+  };
+
+  const displayData = getSortedData();
 
   return (
     <div className="min-h-screen bg-slate-900 p-3 sm:p-6 md:p-8 font-sans pb-16 transition-colors duration-300">
@@ -215,7 +233,7 @@ export default function App() {
       </div>
 
       {/* 控制區 */}
-      <div className="max-w-7xl mx-auto mb-6 sm:mb-10 bg-slate-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-700">
+      <div className="max-w-7xl mx-auto mb-6 sm:mb-8 bg-slate-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-700">
         <label className="block text-xs sm:text-sm font-bold text-slate-300 mb-2 flex items-center gap-1 sm:gap-2">
           <LinkIcon className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400" />
           輸入 Google Sheet CSV 發布連結 (請注意 Sheet 發布約有 5 分鐘延遲)
@@ -244,44 +262,65 @@ export default function App() {
         )}
       </div>
 
+      {/* 排序按鈕工具列 */}
+      <div className="max-w-7xl mx-auto flex justify-end mb-3 sm:mb-4 px-1">
+        <button 
+          onClick={() => setSortMode(prev => (prev + 1) % 3)}
+          className="flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl text-xs sm:text-sm font-bold text-slate-300 transition-all shadow-sm active:scale-95"
+        >
+          <ArrowUpDown className="w-4 h-4 text-slate-400" />
+          {sortMode === 0 && "預設排序 (依試算表)"}
+          {sortMode === 1 && <span className="text-blue-400">排序：2025/4 達成率最高</span>}
+          {sortMode === 2 && <span className="text-teal-400">排序：2022/10 達成率最高</span>}
+        </button>
+      </div>
+
       {/* 標的卡片網格 */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-        {data.map((item, index) => (
-          <div 
-            key={`${item.ticker}-${index}`}
-            className="bg-white rounded-[1.2rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-          >
-            {/* 上半部：標的名稱 (左) 與 目前跌幅區塊 (右) 
-                修改：加入 gap-2 (強制拉開距離)，並加入 min-w-0 防止文字撐破版面 */}
-            <div className="flex justify-between items-center gap-2 mb-4 sm:mb-6">
-              
-              {/* 左側：確保名稱不會黏到右邊 */}
-              <div className="flex flex-col justify-center min-w-0">
-                <span className="text-lg sm:text-3xl md:text-4xl font-black text-slate-800 tracking-tight truncate" title={item.ticker}>
-                  {item.ticker.replace('TPE:', '')}
-                </span>
-              </div>
-              
-              {/* 右側：使用 shrink-0 防止數字區塊被壓縮 */}
-              <div className="flex flex-col items-end shrink-0">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-widest mb-0.5">
-                  2026 DD%
-                </span>
-                <div className="flex items-center gap-0.5 sm:gap-1 bg-rose-50 px-1.5 py-1 sm:px-2 sm:py-1 rounded-md">
-                  <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-rose-500" />
-                  <span className="text-sm sm:text-lg font-bold text-rose-500">{item.dd2026.toFixed(1)}%</span>
+        {displayData.map((item, index) => {
+          // 清理名稱並判斷是否為長代號 (大於 4 碼)
+          const displayTicker = item.ticker.replace('TPE:', '');
+          const isLongTicker = displayTicker.length > 4;
+
+          return (
+            <div 
+              key={`${item.ticker}-${index}`}
+              className="bg-white rounded-[1.2rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+            >
+              {/* 上半部：標的名稱 (左) 與 目前跌幅區塊 (右) */}
+              <div className="flex justify-between items-center gap-2 mb-4 sm:mb-6">
+                
+                {/* 左側：智慧動態縮放名稱字體 */}
+                <div className="flex flex-col justify-center min-w-0">
+                  <span 
+                    className={`font-black text-slate-800 truncate ${isLongTicker ? 'text-[15px] sm:text-2xl md:text-3xl tracking-tighter' : 'text-lg sm:text-3xl md:text-4xl tracking-tight'}`} 
+                    title={displayTicker}
+                  >
+                    {displayTicker}
+                  </span>
                 </div>
+                
+                {/* 右側：使用 shrink-0 防止數字區塊被壓縮 */}
+                <div className="flex flex-col items-end shrink-0">
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-widest mb-0.5">
+                    2026 DD%
+                  </span>
+                  <div className="flex items-center gap-0.5 sm:gap-1 bg-rose-50 px-1.5 py-1 sm:px-2 sm:py-1 rounded-md">
+                    <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-rose-500" />
+                    <span className="text-sm sm:text-lg font-bold text-rose-500">{item.dd2026.toFixed(1)}%</span>
+                  </div>
+                </div>
+
               </div>
 
+              {/* 下半部：並排的玻璃球 */}
+              <div className="flex gap-2 sm:gap-5 justify-center mt-auto">
+                <GlassSphere progress={item.prog25} label="2025/4" type="2025" mdd={item.dd2025} />
+                <GlassSphere progress={item.prog22} label="2022/10" type="2022" mdd={item.dd2022} />
+              </div>
             </div>
-
-            {/* 下半部：並排的玻璃球 */}
-            <div className="flex gap-2 sm:gap-5 justify-center mt-auto">
-              <GlassSphere progress={item.prog25} label="2025/4" type="2025" mdd={item.dd2025} />
-              <GlassSphere progress={item.prog22} label="2022/10" type="2022" mdd={item.dd2022} />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
