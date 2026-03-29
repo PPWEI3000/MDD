@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Info, Droplets, TrendingDown, Link as LinkIcon, RefreshCw, AlertCircle, ArrowUpDown, X, Check, Target, CircleDollarSign, Crosshair, ListTodo } from 'lucide-react';
+import { Info, Droplets, TrendingDown, Link as LinkIcon, RefreshCw, AlertCircle, ArrowUpDown, X, Check, Target, CircleDollarSign, Crosshair, ListTodo, CheckCircle } from 'lucide-react';
 
 // 內嵌 CSS 處理動態波浪與自訂 Checkbox 動畫
 const styles = `
@@ -90,6 +90,7 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
   
   const isOverfilled = progress >= 100;
 
+  // 排序模式動態縮放
   let containerScaleClass = "scale-100 opacity-100";
   if (sortMode === 1) {
     containerScaleClass = is2025 ? "scale-110 opacity-100 z-10" : "scale-90 opacity-60 grayscale-[20%]";
@@ -107,10 +108,13 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
       </span>
       
       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[2.5px] sm:border-[3px] border-slate-700 relative overflow-hidden bg-slate-50 glass-sphere transition-colors duration-500 shadow-md">
+        
+        {/* 等分橫線 */}
         <div className="absolute w-full border-b-[1.5px] border-slate-800/30 z-10" style={{ bottom: '75.0%' }}></div>
         <div className="absolute w-full border-b-[1.5px] border-slate-800/40 z-10" style={{ bottom: '50.0%' }}></div>
         <div className="absolute w-full border-b-[1.5px] border-slate-800/20 z-10" style={{ bottom: '25.0%' }}></div>
 
+        {/* 動態水位容器 */}
         <div 
           className="absolute bottom-0 left-0 w-full transition-all duration-[1500ms] ease-out flex flex-col justify-end z-0"
           style={{ height: loaded ? `${visualHeight}%` : '0%' }}
@@ -119,6 +123,7 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
           <div className={`w-full h-full ${bodyColor} opacity-90`}></div>
         </div>
 
+        {/* 破裂特效 */}
         {isOverfilled && (
           <svg className="absolute inset-0 w-full h-full z-20 pointer-events-none drop-shadow-md" viewBox="0 0 100 100">
             <path d="M 45 0 L 35 25 L 60 50 L 35 75 L 45 100" fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="miter"/>
@@ -128,6 +133,7 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
           </svg>
         )}
 
+        {/* 進度標示 */}
         <div className="absolute inset-0 flex items-center justify-center z-20">
           <span className={`font-black text-sm sm:text-xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] text-white`}>
             {Math.round(progress)}%
@@ -356,8 +362,8 @@ export default function App() {
     }
   };
 
-  // 💡 即時計算「下一目標價」(最接近現價且小於現價)
-  const getNextTarget = (item) => {
+  // 💡 智慧即時計算「下一目標價」(過濾掉已打勾的，並找出未執行的最高價位)
+  const getNextTarget = (item, checksState) => {
     if (!item.currentPrice || item.currentPrice <= 0) return null;
     
     // 推算最高點
@@ -365,32 +371,40 @@ export default function App() {
     const percents = [50, 66.7, 83.3, 100];
     let allTargets = [];
 
-    // 將 2025 與 2022 共 8 個目標價全部算出
+    // 將 2025 與 2022 共 8 個目標價與打勾狀態綁定
     percents.forEach(p => {
       if (item.dd2025 < 0) {
+        const checkId = `${item.ticker}-2025/4-${p}`;
         allTargets.push({
           type: '2025',
           percent: p,
-          price: peak * (1 + (item.dd2025 * (p / 100) / 100))
+          price: peak * (1 + (item.dd2025 * (p / 100) / 100)),
+          isChecked: !!checksState[checkId]
         });
       }
       if (item.dd2022 < 0) {
+        const checkId = `${item.ticker}-2022/10-${p}`;
         allTargets.push({
           type: '2022',
           percent: p,
-          price: peak * (1 + (item.dd2022 * (p / 100) / 100))
+          price: peak * (1 + (item.dd2022 * (p / 100) / 100)),
+          isChecked: !!checksState[checkId]
         });
       }
     });
 
-    // 由高至低排序 (最接近現價的會在前面)
-    allTargets.sort((a, b) => b.price - a.price);
+    // 過濾掉已經打勾執行的目標
+    const uncheckedTargets = allTargets.filter(t => !t.isChecked);
 
-    // 尋找第一個「小於現價」的目標價
-    const nextTarget = allTargets.find(t => t.price < item.currentPrice);
-    
-    // 如果現價已經跌破所有目標價，或者尚未達到任何目標，做好防呆機制
-    return nextTarget || allTargets[0];
+    // 如果所有有效目標都已經打勾了
+    if (uncheckedTargets.length === 0 && allTargets.length > 0) return 'ALL_COMPLETED';
+    if (uncheckedTargets.length === 0) return null;
+
+    // 將尚未執行的目標由高至低排序 (跌幅最淺、最先會碰到的放最前面)
+    uncheckedTargets.sort((a, b) => b.price - a.price);
+
+    // 回傳最優先的未執行目標
+    return uncheckedTargets[0];
   };
 
   const getSortedData = () => {
@@ -477,8 +491,9 @@ export default function App() {
         {displayData.map((item, index) => {
           const displayTicker = item.ticker.replace('TPE:', '');
           const isLongTicker = displayTicker.length > 4;
-          // 取得自動算出的「下一目標價」
-          const nextTarget = getNextTarget(item);
+          
+          // 💡 傳入 checks 狀態讓系統判斷哪個還沒打勾
+          const nextTarget = getNextTarget(item, checks);
 
           return (
             <div 
@@ -507,7 +522,7 @@ export default function App() {
               </div>
 
               <div className="flex flex-col mt-auto">
-                <div className="flex gap-2 sm:gap-5 justify-center mb-3">
+                <div className="flex gap-2 sm:gap-5 justify-center mb-4">
                   <GlassSphere 
                     progress={item.prog25} 
                     label="2025/4" 
@@ -538,23 +553,27 @@ export default function App() {
                   />
                 </div>
                 
-                {/* 💡 下一目標價 橫幅設計 */}
-                {nextTarget && (
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)]">
-                    <div className="flex items-center gap-1.5">
-                      <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
-                      <span className="text-[10px] sm:text-xs font-bold text-slate-500">下一目標價</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase">
-                        ({nextTarget.type} {nextTarget.percent}%)
+                {/* 💡 全新 NEXT 雙行橫幅設計 */}
+                {nextTarget === 'ALL_COMPLETED' ? (
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 flex items-center justify-center shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] gap-2 mt-1">
+                    <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500" />
+                    <span className="text-sm sm:text-base font-bold text-emerald-700 tracking-tight">全部目標已完成</span>
+                  </div>
+                ) : nextTarget ? (
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] mt-1">
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">NEXT</span>
+                      <span className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md leading-none ${nextTarget.type === '2025' ? 'bg-blue-100 text-blue-800' : 'bg-teal-100 text-teal-800'}`}>
+                        {nextTarget.type} {nextTarget.percent}%
                       </span>
-                      <span className="text-sm sm:text-base font-black text-slate-700 tracking-tight">
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-lg sm:text-xl font-black text-slate-700 tracking-tight">
                         {nextTarget.price.toFixed(2)}
                       </span>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
           );
