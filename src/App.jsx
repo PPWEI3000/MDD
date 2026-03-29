@@ -32,7 +32,7 @@ const styles = `
   }
 `;
 
-// 備用模擬數據 (加入現價模擬)
+// 備用模擬數據
 const fallbackData = [
   { ticker: "VOO", currentPrice: 582.96, dd2026: -8.9, dd2025: -19.0, dd2022: -25.4 },
   { ticker: "00675L", currentPrice: 85.30, dd2026: -14.9, dd2025: -55.2, dd2022: -64.0 }, 
@@ -71,7 +71,7 @@ const mapProgressToVisualHeight = (p) => {
   return 75 + ((p - 83.3) / (100 - 83.3)) * 25;
 };
 
-// 玻璃球組件 (加入 onClick 事件)
+// 玻璃球組件
 const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
   const [loaded, setLoaded] = useState(false);
   
@@ -153,18 +153,13 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
   if (!isOpen || !data) return null;
 
   const { ticker, currentPrice, currentDD, baseDD, label } = data;
-  
-  // 計算目標級距
   const targets = [50, 66.7, 83.3, 100];
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      {/* 點擊背景關閉 */}
       <div className="absolute inset-0" onClick={onClose}></div>
       
-      {/* 典雅白色卡片 */}
       <div className="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl relative z-10 overflow-hidden transform transition-all">
-        {/* 關閉按鈕 */}
         <button 
           onClick={onClose}
           className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
@@ -172,7 +167,6 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
           <X className="w-5 h-5" />
         </button>
 
-        {/* 標題區 */}
         <div className="pt-8 pb-6 px-6 text-center">
           <h2 className="text-3xl font-black text-slate-800 tracking-tight">
             {ticker.replace('TPE:', '')}
@@ -183,7 +177,6 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
           </p>
         </div>
 
-        {/* 資料表格 */}
         <div className="px-6 pb-8">
           <div className="rounded-2xl border border-slate-200 overflow-hidden">
             <table className="w-full text-sm sm:text-base">
@@ -197,17 +190,14 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
               </thead>
               <tbody className="bg-slate-50">
                 {targets.map((percent, idx) => {
-                  // 計算目標跌幅
                   const targetDD = baseDD * (percent / 100);
                   
-                  // 自動反推目標價： 峰值 = 現價 / (1 + 目前跌幅)。 目標價 = 峰值 * (1 + 目標跌幅)
                   let targetPrice = 0;
                   if (currentPrice > 0) {
                     const peakPrice = currentPrice / (1 + (currentDD / 100));
                     targetPrice = peakPrice * (1 + (targetDD / 100));
                   }
 
-                  // 產生唯一的勾選 ID (例: VOO-2025-50)
                   const checkId = `${ticker}-${label}-${percent}`;
                   const isChecked = !!checks[checkId];
 
@@ -219,7 +209,6 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
                         {targetPrice > 0 ? targetPrice.toFixed(2) : '-'}
                       </td>
                       <td className="py-3.5 px-2 flex justify-center items-center">
-                        {/* 典雅自訂 Checkbox */}
                         <label className="elegant-checkbox relative cursor-pointer flex items-center justify-center w-6 h-6">
                           <input 
                             type="checkbox" 
@@ -246,20 +235,18 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
 
 
 export default function App() {
-  const defaultUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTKvusm4Xw-nG7c6jyYJAdU-GoBlwzrPb_87z8Gr3eQt0E_8E89_U2UcOA3-_cfjV4ft36KL1cTSoNY/pub?gid=901644832&single=true&output=csv';
+  // 💡 請將下方這段網址替換為您剛剛產生的「網頁應用程式 (Apps Script) 網址」
+  // 若您暫時還沒設定好，也可以放原本的 CSV 網址，系統會自動向下相容處理。
+  const defaultUrl = 'https://script.google.com/macros/s/AKfycbzc659ptYc81-Gb24ws_8ZFDzRQ5yks-zmGNxoHFwJH5ZhIamVYHCp7yjZsewE0IMbHEQ/exec';
   
   const [data, setData] = useState(fallbackData);
   const [csvUrl, setCsvUrl] = useState(defaultUrl);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // 排序狀態
   const [sortMode, setSortMode] = useState(0);
-
-  // 懸浮視窗狀態
   const [modalData, setModalData] = useState(null);
 
-  // 本機記憶體 Checkbox 狀態 (從 localStorage 讀取)
   const [checks, setChecks] = useState(() => {
     try {
       const saved = localStorage.getItem('mdd-dashboard-checks');
@@ -269,7 +256,6 @@ export default function App() {
     }
   });
 
-  // 當 checks 改變時，自動寫入 localStorage 永久保存
   useEffect(() => {
     localStorage.setItem('mdd-dashboard-checks', JSON.stringify(checks));
   }, [checks]);
@@ -279,13 +265,13 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchAndParseCSV(defaultUrl);
+    fetchData(defaultUrl);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchAndParseCSV = async (urlToFetch = csvUrl) => {
+  const fetchData = async (urlToFetch = csvUrl) => {
     if (!urlToFetch) {
-      setError('請輸入 Google Sheet 發布的 CSV 連結');
+      setError('請輸入來源連結');
       return;
     }
     
@@ -293,25 +279,36 @@ export default function App() {
     setError('');
 
     try {
-      const response = await fetch(urlToFetch);
-      if (!response.ok) throw new Error('網路連線失敗，請確認連結是否正確且已設為公開發布');
+      // 核心升級：加入時間戳，強制瀏覽器抓取最新資料，徹底解決快取問題
+      const separator = urlToFetch.includes('?') ? '&' : '?';
+      const noCacheUrl = `${urlToFetch}${separator}t=${new Date().getTime()}`;
       
-      const csvText = await response.text();
-      const lines = csvText.split('\n').filter(line => line.trim() !== '');
+      const response = await fetch(noCacheUrl);
+      if (!response.ok) throw new Error('網路連線失敗，請確認連結是否正確');
       
-      if (lines.length <= 1) throw new Error('無法讀取數據，請確認試算表格式');
+      const responseText = await response.text();
+      let rows = [];
+      
+      try {
+        // 嘗試智慧解析為 JSON (Apps Script 的即時格式)
+        rows = JSON.parse(responseText);
+      } catch (e) {
+        // 若不是 JSON，向下相容解析原本的 CSV 格式
+        const lines = responseText.split('\n').filter(line => line.trim() !== '');
+        rows = lines.map(line => parseCSVLine(line));
+      }
 
-      const parsedData = lines.slice(1).map(line => {
-        const values = parseCSVLine(line);
-        
+      if (!rows || rows.length <= 1) throw new Error('無法讀取數據，請確認來源格式');
+
+      const parsedData = rows.slice(1).map(values => {
         const parsePercent = (val) => {
-          if (!val || val === 'N/A' || val.includes('#')) return 0;
-          return parseFloat(val.replace('%', ''));
+          if (!val || val === 'N/A' || val.toString().includes('#')) return 0;
+          return parseFloat(val.toString().replace('%', ''));
         };
 
         const ticker = values[0];
-        // 💡 【重要】此處預設從 CSV 第 2 欄 (Index 1) 抓取「現價」。若無現價則預設為 0。
-        const currentPrice = values[1] ? parseFloat(values[1].replace(/,/g, '')) : 0;
+        // 支援包含逗號的字串轉換數字
+        const currentPrice = values[1] ? parseFloat(values[1].toString().replace(/,/g, '')) : 0;
         
         const dd2022 = parsePercent(values[5]);
         const dd2025 = parsePercent(values[10]);
@@ -382,7 +379,7 @@ export default function App() {
       <div className="max-w-7xl mx-auto mb-6 sm:mb-8 bg-slate-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-700">
         <label className="block text-xs sm:text-sm font-bold text-slate-300 mb-2 flex items-center gap-1 sm:gap-2">
           <LinkIcon className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400" />
-          輸入 Google Sheet CSV 發布連結 (請注意 Sheet 發布約有 5 分鐘延遲)
+          輸入即時 API 或 CSV 連結 (強烈推薦使用 Apps Script 以達 0 延遲)
         </label>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <input 
@@ -392,7 +389,7 @@ export default function App() {
             className="flex-1 px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-slate-900 border border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-200 font-medium"
           />
           <button 
-            onClick={() => fetchAndParseCSV(csvUrl)}
+            onClick={() => fetchData(csvUrl)}
             disabled={isLoading}
             className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base font-bold rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shrink-0 shadow-sm"
           >
