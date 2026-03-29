@@ -155,7 +155,7 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
   const { ticker, currentPrice, currentDD, baseDD, label } = data;
   const targets = [50, 66.7, 83.3, 100];
   
-  // 決定標籤顏色 (實心淺底 + 深色字)
+  // 決定標籤顏色
   const is2025 = label === '2025/4';
   const badgeClass = is2025 
     ? 'bg-blue-100 text-blue-800' 
@@ -176,7 +176,6 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
         <div className="pt-8 pb-6 px-6 text-center">
           <h2 className="text-3xl font-black text-slate-800 tracking-tight flex items-center justify-center gap-3">
             {ticker.replace('TPE:', '')}
-            {/* 實心塗色、深色字體的標籤設計 */}
             <span className={`text-sm font-black px-3 py-1 rounded-xl shadow-sm tracking-wide ${badgeClass}`}>
               {label}
             </span>
@@ -366,12 +365,10 @@ export default function App() {
   const getNextTarget = (item, checksState) => {
     if (!item.currentPrice || item.currentPrice <= 0) return null;
     
-    // 推算最高點
     const peak = item.currentPrice / (1 + (item.dd2026 / 100));
     const percents = [50, 66.7, 83.3, 100];
     let allTargets = [];
 
-    // 將 2025 與 2022 共 8 個目標價與打勾狀態綁定
     percents.forEach(p => {
       if (item.dd2025 < 0) {
         const checkId = `${item.ticker}-2025/4-${p}`;
@@ -393,17 +390,12 @@ export default function App() {
       }
     });
 
-    // 過濾掉已經打勾執行的目標
     const uncheckedTargets = allTargets.filter(t => !t.isChecked);
 
-    // 如果所有有效目標都已經打勾了
     if (uncheckedTargets.length === 0 && allTargets.length > 0) return 'ALL_COMPLETED';
     if (uncheckedTargets.length === 0) return null;
 
-    // 將尚未執行的目標由高至低排序 (跌幅最淺、最先會碰到的放最前面)
     uncheckedTargets.sort((a, b) => b.price - a.price);
-
-    // 回傳最優先的未執行目標
     return uncheckedTargets[0];
   };
 
@@ -419,7 +411,6 @@ export default function App() {
     <div className="min-h-screen bg-slate-900 p-3 sm:p-6 md:p-8 font-sans pb-16 transition-colors duration-300">
       <style>{styles}</style>
       
-      {/* 執行紀錄懸浮視窗 */}
       <ExecutionModal 
         isOpen={!!modalData} 
         onClose={() => setModalData(null)} 
@@ -492,7 +483,6 @@ export default function App() {
           const displayTicker = item.ticker.replace('TPE:', '');
           const isLongTicker = displayTicker.length > 4;
           
-          // 💡 傳入 checks 狀態讓系統判斷哪個還沒打勾
           const nextTarget = getNextTarget(item, checks);
 
           return (
@@ -508,9 +498,9 @@ export default function App() {
                   >
                     {displayTicker}
                   </span>
-                  {/* 新增：將現價直接顯示在標的名稱正下方 */}
+                  {/* 將「現價」縮簡為「現」，騰出更多空間 */}
                   <span className="text-[11px] sm:text-sm font-bold text-slate-500 mt-0.5 truncate">
-                    現價 {item.currentPrice > 0 ? item.currentPrice.toFixed(2) : 'N/A'}
+                    現 {item.currentPrice > 0 ? item.currentPrice.toFixed(2) : 'N/A'}
                   </span>
                 </div>
                 
@@ -557,7 +547,6 @@ export default function App() {
                   />
                 </div>
                 
-                {/* 💡 全新 NEXT 雙行橫幅設計 */}
                 {nextTarget === 'ALL_COMPLETED' ? (
                   <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 flex items-center justify-center shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] gap-2 mt-1">
                     <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500" />
@@ -565,14 +554,14 @@ export default function App() {
                   </div>
                 ) : nextTarget ? (
                   <div className="bg-slate-50 border border-slate-100 rounded-xl p-2 sm:px-3 sm:py-2 flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] mt-1">
-                    {/* 左側三行置中區塊：NEXT + 2025/04 + 50% */}
+                    {/* 左側三行置中區塊：放大的 NEXT + 無背景色的 2025/4 + 50% */}
                     <div className="flex flex-col items-center justify-center min-w-[64px] sm:min-w-[72px] shrink-0">
-                      <span className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">NEXT</span>
-                      <div className={`flex flex-col items-center justify-center px-2 py-1 rounded-md w-full ${nextTarget.type === '2025' ? 'bg-blue-100 text-blue-800' : 'bg-teal-100 text-teal-800'}`}>
-                        <span className="text-[9px] sm:text-[10px] font-bold leading-tight tracking-wider">
-                          {nextTarget.type === '2025' ? '2025/04' : '2022/10'}
+                      <span className="text-sm sm:text-base font-black text-slate-400 uppercase tracking-widest leading-none mb-1">NEXT</span>
+                      <div className="flex flex-col items-center justify-center w-full">
+                        <span className={`text-[10px] sm:text-[11px] font-bold leading-tight tracking-wider ${nextTarget.type === '2025' ? 'text-blue-500' : 'text-teal-600'}`}>
+                          {nextTarget.type === '2025' ? '2025/4' : '2022/10'}
                         </span>
-                        <span className="text-[11px] sm:text-xs font-black leading-tight mt-0.5">
+                        <span className={`text-[11px] sm:text-xs font-black leading-tight mt-0.5 ${nextTarget.type === '2025' ? 'text-blue-600' : 'text-teal-700'}`}>
                           {nextTarget.percent}%
                         </span>
                       </div>
