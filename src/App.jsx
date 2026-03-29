@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Info, Droplets, TrendingDown, Link as LinkIcon, RefreshCw, AlertCircle, ArrowUpDown } from 'lucide-react';
+import { Info, Droplets, TrendingDown, Link as LinkIcon, RefreshCw, AlertCircle, ArrowUpDown, X, Check } from 'lucide-react';
 
-// 內嵌 CSS 處理動態波浪
+// 內嵌 CSS 處理動態波浪與自訂 Checkbox 動畫
 const styles = `
   @keyframes wave-slide {
     0% { background-position-x: 0; }
@@ -20,13 +20,23 @@ const styles = `
     background-size: 400px 40px;
     animation: wave-slide 3.5s linear infinite;
   }
+  
+  /* 自訂典雅勾選框 */
+  .elegant-checkbox input:checked + div {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+  }
+  .elegant-checkbox input:checked + div svg {
+    opacity: 1;
+    transform: scale(1);
+  }
 `;
 
-// 備用模擬數據
+// 備用模擬數據 (加入現價模擬)
 const fallbackData = [
-  { ticker: "VOO", dd2026: -8.9, dd2025: -19.0, dd2022: -25.4 },
-  { ticker: "00675L", dd2026: -14.9, dd2025: -55.2, dd2022: -64.0 }, 
-  { ticker: "MSFT", dd2026: -35.0, dd2025: -17.5, dd2022: -34.4 }
+  { ticker: "VOO", currentPrice: 582.96, dd2026: -8.9, dd2025: -19.0, dd2022: -25.4 },
+  { ticker: "00675L", currentPrice: 85.30, dd2026: -14.9, dd2025: -55.2, dd2022: -64.0 }, 
+  { ticker: "MSFT", currentPrice: 420.55, dd2026: -35.0, dd2025: -17.5, dd2022: -34.4 }
 ].map(item => ({
   ...item,
   prog25: (item.dd2026 / item.dd2025) * 100,
@@ -55,15 +65,14 @@ const parseCSVLine = (text) => {
 const mapProgressToVisualHeight = (p) => {
   if (p <= 0) return 0;
   if (p > 100) return 105; 
-
   if (p <= 50) return (p / 50) * 25;
   if (p <= 66.7) return 25 + ((p - 50) / (66.7 - 50)) * 25;
   if (p <= 83.3) return 50 + ((p - 66.7) / (83.3 - 66.7)) * 25;
   return 75 + ((p - 83.3) / (100 - 83.3)) * 25;
 };
 
-// 玻璃球組件 (新增 sortMode 屬性以判斷縮放比例)
-const GlassSphere = ({ progress, label, type, mdd, sortMode }) => {
+// 玻璃球組件 (加入 onClick 事件)
+const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
   const [loaded, setLoaded] = useState(false);
   
   useEffect(() => {
@@ -81,24 +90,24 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode }) => {
   
   const isOverfilled = progress >= 100;
 
-  // 根據目前的排序模式，決定玻璃球的縮放與透明度
+  // 排序模式動態縮放
   let containerScaleClass = "scale-100 opacity-100";
   if (sortMode === 1) {
-    // 依 2025 排序：2025 放大，2022 縮小變暗
     containerScaleClass = is2025 ? "scale-110 opacity-100 z-10" : "scale-90 opacity-60 grayscale-[20%]";
   } else if (sortMode === 2) {
-    // 依 2022 排序：2022 放大，2025 縮小變暗
     containerScaleClass = !is2025 ? "scale-110 opacity-100 z-10" : "scale-90 opacity-60 grayscale-[20%]";
   }
 
   return (
-    // 外層加入 transition 與動態計算的 scale 類別
-    <div className={`flex flex-col items-center gap-1 sm:gap-2 transition-all duration-500 ease-out origin-center ${containerScaleClass}`}>
+    <div 
+      className={`flex flex-col items-center gap-1 sm:gap-2 transition-all duration-500 ease-out origin-center ${containerScaleClass} cursor-pointer hover:scale-105`}
+      onClick={onClick}
+    >
       <span className={`text-[10px] sm:text-xs font-bold tracking-wider ${titleColor}`}>
         {label}
       </span>
       
-      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[2.5px] sm:border-[3px] border-slate-700 relative overflow-hidden bg-slate-50 glass-sphere transition-colors duration-500">
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[2.5px] sm:border-[3px] border-slate-700 relative overflow-hidden bg-slate-50 glass-sphere transition-colors duration-500 shadow-md">
         
         {/* 等分橫線 */}
         <div className="absolute w-full border-b-[1.5px] border-slate-800/30 z-10" style={{ bottom: '75.0%' }}></div>
@@ -139,6 +148,103 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode }) => {
   );
 };
 
+// --- 懸浮視窗組件 (Target Modal) ---
+const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
+  if (!isOpen || !data) return null;
+
+  const { ticker, currentPrice, currentDD, baseDD, label } = data;
+  
+  // 計算目標級距
+  const targets = [50, 66.7, 83.3, 100];
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      {/* 點擊背景關閉 */}
+      <div className="absolute inset-0" onClick={onClose}></div>
+      
+      {/* 典雅白色卡片 */}
+      <div className="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl relative z-10 overflow-hidden transform transition-all">
+        {/* 關閉按鈕 */}
+        <button 
+          onClick={onClose}
+          className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* 標題區 */}
+        <div className="pt-8 pb-6 px-6 text-center">
+          <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+            {ticker.replace('TPE:', '')}
+            <span className="text-sm font-bold text-slate-400 ml-2 align-middle border border-slate-200 px-2 py-1 rounded-md">{label}</span>
+          </h2>
+          <p className="text-xl font-medium text-slate-600 mt-2 flex items-center justify-center gap-2">
+            現價 <span className="font-bold text-slate-800">{currentPrice > 0 ? currentPrice.toFixed(2) : 'N/A'}</span>
+          </p>
+        </div>
+
+        {/* 資料表格 */}
+        <div className="px-6 pb-8">
+          <div className="rounded-2xl border border-slate-200 overflow-hidden">
+            <table className="w-full text-sm sm:text-base">
+              <thead>
+                <tr className="bg-[#4a6b9c] text-white">
+                  <th className="py-3 px-2 text-center font-bold w-1/4">達成%</th>
+                  <th className="py-3 px-2 text-center font-bold w-1/4">目標跌幅</th>
+                  <th className="py-3 px-2 text-center font-bold w-1/4">目標價</th>
+                  <th className="py-3 px-2 text-center font-bold w-1/4">已完成</th>
+                </tr>
+              </thead>
+              <tbody className="bg-slate-50">
+                {targets.map((percent, idx) => {
+                  // 計算目標跌幅
+                  const targetDD = baseDD * (percent / 100);
+                  
+                  // 自動反推目標價： 峰值 = 現價 / (1 + 目前跌幅)。 目標價 = 峰值 * (1 + 目標跌幅)
+                  let targetPrice = 0;
+                  if (currentPrice > 0) {
+                    const peakPrice = currentPrice / (1 + (currentDD / 100));
+                    targetPrice = peakPrice * (1 + (targetDD / 100));
+                  }
+
+                  // 產生唯一的勾選 ID (例: VOO-2025-50)
+                  const checkId = `${ticker}-${label}-${percent}`;
+                  const isChecked = !!checks[checkId];
+
+                  return (
+                    <tr key={percent} className={`border-t border-slate-200 transition-colors ${isChecked ? 'bg-blue-50/50' : 'hover:bg-slate-100/50'}`}>
+                      <td className="py-3.5 px-2 text-center font-bold text-slate-700">{percent}%</td>
+                      <td className="py-3.5 px-2 text-center font-medium text-slate-600">{targetDD.toFixed(1)}%</td>
+                      <td className="py-3.5 px-2 text-center font-bold text-slate-800">
+                        {targetPrice > 0 ? targetPrice.toFixed(2) : '-'}
+                      </td>
+                      <td className="py-3.5 px-2 flex justify-center items-center">
+                        {/* 典雅自訂 Checkbox */}
+                        <label className="elegant-checkbox relative cursor-pointer flex items-center justify-center w-6 h-6">
+                          <input 
+                            type="checkbox" 
+                            className="peer sr-only"
+                            checked={isChecked}
+                            onChange={() => onToggleCheck(checkId)}
+                          />
+                          <div className="w-6 h-6 border-2 border-slate-300 rounded-[6px] bg-white transition-all peer-hover:border-blue-400 flex items-center justify-center shadow-sm">
+                            <Check className="w-4 h-4 text-white opacity-0 transform scale-50 transition-all duration-200 stroke-[3]" />
+                          </div>
+                        </label>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 export default function App() {
   const defaultUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTKvusm4Xw-nG7c6jyYJAdU-GoBlwzrPb_87z8Gr3eQt0E_8E89_U2UcOA3-_cfjV4ft36KL1cTSoNY/pub?gid=901644832&single=true&output=csv';
   
@@ -147,8 +253,30 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // 排序狀態 (0: 預設, 1: 2025高至低, 2: 2022高至低)
+  // 排序狀態
   const [sortMode, setSortMode] = useState(0);
+
+  // 懸浮視窗狀態
+  const [modalData, setModalData] = useState(null);
+
+  // 本機記憶體 Checkbox 狀態 (從 localStorage 讀取)
+  const [checks, setChecks] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mdd-dashboard-checks');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // 當 checks 改變時，自動寫入 localStorage 永久保存
+  useEffect(() => {
+    localStorage.setItem('mdd-dashboard-checks', JSON.stringify(checks));
+  }, [checks]);
+
+  const handleToggleCheck = (id) => {
+    setChecks(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   useEffect(() => {
     fetchAndParseCSV(defaultUrl);
@@ -182,12 +310,16 @@ export default function App() {
         };
 
         const ticker = values[0];
+        // 💡 【重要】此處預設從 CSV 第 2 欄 (Index 1) 抓取「現價」。若無現價則預設為 0。
+        const currentPrice = values[1] ? parseFloat(values[1].replace(/,/g, '')) : 0;
+        
         const dd2022 = parsePercent(values[5]);
         const dd2025 = parsePercent(values[10]);
         const dd2026 = parsePercent(values[15]);
 
         return {
           ticker: ticker,
+          currentPrice: isNaN(currentPrice) ? 0 : currentPrice,
           dd2022: dd2022,
           dd2025: dd2025,
           dd2026: dd2026,
@@ -197,7 +329,6 @@ export default function App() {
       }).filter(item => item.ticker && item.ticker !== '標的');
 
       setData(parsedData);
-      // 載入新資料時，重置為預設排序
       setSortMode(0);
       
     } catch (err) {
@@ -207,15 +338,10 @@ export default function App() {
     }
   };
 
-  // 取得排序後的資料
   const getSortedData = () => {
-    if (sortMode === 1) {
-      return [...data].sort((a, b) => b.prog25 - a.prog25);
-    }
-    if (sortMode === 2) {
-      return [...data].sort((a, b) => b.prog22 - a.prog22);
-    }
-    return data; // sortMode === 0
+    if (sortMode === 1) return [...data].sort((a, b) => b.prog25 - a.prog25);
+    if (sortMode === 2) return [...data].sort((a, b) => b.prog22 - a.prog22);
+    return data; 
   };
 
   const displayData = getSortedData();
@@ -224,6 +350,15 @@ export default function App() {
     <div className="min-h-screen bg-slate-900 p-3 sm:p-6 md:p-8 font-sans pb-16 transition-colors duration-300">
       <style>{styles}</style>
       
+      {/* 執行紀錄懸浮視窗 */}
+      <ExecutionModal 
+        isOpen={!!modalData} 
+        onClose={() => setModalData(null)} 
+        data={modalData}
+        checks={checks}
+        onToggleCheck={handleToggleCheck}
+      />
+
       {/* 標題與說明區 */}
       <div className="max-w-7xl mx-auto mb-6 sm:mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-6">
         <div>
@@ -238,7 +373,7 @@ export default function App() {
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-3 bg-red-400/20 rounded-full"></div>
           <p className="text-slate-800 font-bold flex items-start gap-2 text-xs sm:text-sm leading-relaxed">
             <Info className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 shrink-0 mt-0.5" />
-            <span>備註：玻璃球內灰色橫線將球體等分為 4 格。水位依序代表歷史股災達成進度：<strong className="text-amber-700 mx-1">50%、66.7%、83.3%</strong>。</span>
+            <span>備註：點擊彩色玻璃球，即可開啟專屬的「加碼執行紀錄表」，系統會自動幫您推算加碼目標價！</span>
           </p>
         </div>
       </div>
@@ -297,10 +432,8 @@ export default function App() {
               key={`${item.ticker}-${index}`}
               className="bg-white rounded-[1.2rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
             >
-              {/* 上半部：標的名稱 (左) 與 目前跌幅區塊 (右) */}
+              {/* 上半部：標的名稱與跌幅 */}
               <div className="flex justify-between items-center gap-2 mb-4 sm:mb-6">
-                
-                {/* 左側：智慧動態縮放名稱字體 */}
                 <div className="flex flex-col justify-center min-w-0">
                   <span 
                     className={`font-black text-slate-800 truncate ${isLongTicker ? 'text-[15px] sm:text-2xl md:text-3xl tracking-tighter' : 'text-lg sm:text-3xl md:text-4xl tracking-tight'}`} 
@@ -310,7 +443,6 @@ export default function App() {
                   </span>
                 </div>
                 
-                {/* 右側：使用 shrink-0 防止數字區塊被壓縮 */}
                 <div className="flex flex-col items-end shrink-0">
                   <span className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-widest mb-0.5">
                     2026 DD%
@@ -320,13 +452,38 @@ export default function App() {
                     <span className="text-sm sm:text-lg font-bold text-rose-500">{item.dd2026.toFixed(1)}%</span>
                   </div>
                 </div>
-
               </div>
 
-              {/* 下半部：並排的玻璃球 (傳入 sortMode) */}
+              {/* 下半部：可點擊的玻璃球 */}
               <div className="flex gap-2 sm:gap-5 justify-center mt-auto">
-                <GlassSphere progress={item.prog25} label="2025/4" type="2025" mdd={item.dd2025} sortMode={sortMode} />
-                <GlassSphere progress={item.prog22} label="2022/10" type="2022" mdd={item.dd2022} sortMode={sortMode} />
+                <GlassSphere 
+                  progress={item.prog25} 
+                  label="2025/4" 
+                  type="2025" 
+                  mdd={item.dd2025} 
+                  sortMode={sortMode}
+                  onClick={() => setModalData({
+                    ticker: item.ticker,
+                    currentPrice: item.currentPrice,
+                    currentDD: item.dd2026,
+                    baseDD: item.dd2025,
+                    label: '2025/4'
+                  })} 
+                />
+                <GlassSphere 
+                  progress={item.prog22} 
+                  label="2022/10" 
+                  type="2022" 
+                  mdd={item.dd2022} 
+                  sortMode={sortMode}
+                  onClick={() => setModalData({
+                    ticker: item.ticker,
+                    currentPrice: item.currentPrice,
+                    currentDD: item.dd2026,
+                    baseDD: item.dd2022,
+                    label: '2022/10'
+                  })} 
+                />
               </div>
             </div>
           );
