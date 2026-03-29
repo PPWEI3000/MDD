@@ -109,10 +109,10 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
       
       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[2.5px] sm:border-[3px] border-slate-700 relative overflow-hidden bg-slate-50 glass-sphere transition-colors duration-500 shadow-md">
         
-        {/* 等分橫線 (已調淡顏色為淺灰色，不干擾閱讀) */}
-        <div className="absolute w-full border-b-[1.5px] border-slate-300/50 z-10" style={{ bottom: '75.0%' }}></div>
-        <div className="absolute w-full border-b-[1.5px] border-slate-300/60 z-10" style={{ bottom: '50.0%' }}></div>
-        <div className="absolute w-full border-b-[1.5px] border-slate-800/10 z-10" style={{ bottom: '25.0%' }}></div>
+        {/* 等分橫線 (調淡為淺灰色) */}
+        <div className="absolute w-full border-b-[1.5px] border-slate-400/20 z-10" style={{ bottom: '75.0%' }}></div>
+        <div className="absolute w-full border-b-[1.5px] border-slate-400/30 z-10" style={{ bottom: '50.0%' }}></div>
+        <div className="absolute w-full border-b-[1.5px] border-slate-400/10 z-10" style={{ bottom: '25.0%' }}></div>
 
         {/* 動態水位容器 */}
         <div 
@@ -547,27 +547,27 @@ export default function App() {
                 </div>
                 
                 {nextTarget === 'ALL_COMPLETED' ? (
-                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 flex items-center justify-center shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] gap-2 mt-1">
-                    <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500" />
-                    <span className="text-sm sm:text-base font-bold text-emerald-700 tracking-tight">全部達標</span>
+                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-2 py-2 sm:py-2.5 flex items-center justify-center shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] gap-1.5 mt-1">
+                    <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
+                    <span className="text-xs sm:text-sm font-bold text-emerald-700 tracking-tight">全部達標</span>
                   </div>
                 ) : nextTarget ? (
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-2 sm:px-3 sm:py-2 flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] mt-1">
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-2 flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] mt-1 gap-1">
                     {/* 左側三行置中區塊：放大的 NEXT (與數字同色) + 無背景色的 2025/4 + 50% */}
-                    <div className="flex flex-col items-center justify-center min-w-[64px] sm:min-w-[72px] shrink-0">
-                      <span className="text-sm sm:text-base font-black text-slate-700 uppercase tracking-widest leading-none mb-1">NEXT</span>
+                    <div className="flex flex-col items-center justify-center shrink-0">
+                      <span className="text-[10px] sm:text-xs font-black text-slate-700 uppercase tracking-widest leading-none mb-1">NEXT</span>
                       <div className="flex flex-col items-center justify-center w-full">
-                        <span className={`text-[10px] sm:text-[11px] font-bold leading-tight tracking-wider ${nextTarget.type === '2025' ? 'text-blue-500' : 'text-teal-600'}`}>
+                        <span className={`text-[9px] sm:text-[10px] font-bold leading-tight tracking-wider ${nextTarget.type === '2025' ? 'text-blue-500' : 'text-teal-600'}`}>
                           {nextTarget.type === '2025' ? '2025/4' : '2022/10'}
                         </span>
-                        <span className={`text-[11px] sm:text-xs font-black leading-tight mt-0.5 ${nextTarget.type === '2025' ? 'text-blue-600' : 'text-teal-700'}`}>
+                        <span className={`text-[10px] sm:text-[11px] font-black leading-tight mt-0.5 ${nextTarget.type === '2025' ? 'text-blue-600' : 'text-teal-700'}`}>
                           {nextTarget.percent}%
                         </span>
                       </div>
                     </div>
-                    {/* 右側目標價稍微縮小並置中偏右，防溢出 */}
-                    <div className="flex items-center pl-2 min-w-0">
-                      <span className="text-lg sm:text-xl font-black text-slate-700 tracking-tight truncate">
+                    {/* 右側目標價：縮小字體並收緊字距，確保 6 位數價格完美呈現 */}
+                    <div className="flex items-center justify-end min-w-0 flex-1">
+                      <span className="text-[15px] sm:text-lg font-black text-slate-700 tracking-tighter truncate">
                         {nextTarget.price.toFixed(2)}
                       </span>
                     </div>
