@@ -109,10 +109,10 @@ const GlassSphere = ({ progress, label, type, mdd, sortMode, onClick }) => {
       
       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[2.5px] sm:border-[3px] border-slate-700 relative overflow-hidden bg-slate-50 glass-sphere transition-colors duration-500 shadow-md">
         
-        {/* 等分橫線 */}
-        <div className="absolute w-full border-b-[1.5px] border-slate-800/30 z-10" style={{ bottom: '75.0%' }}></div>
-        <div className="absolute w-full border-b-[1.5px] border-slate-800/40 z-10" style={{ bottom: '50.0%' }}></div>
-        <div className="absolute w-full border-b-[1.5px] border-slate-800/20 z-10" style={{ bottom: '25.0%' }}></div>
+        {/* 等分橫線 (已調淡顏色為淺灰色，不干擾閱讀) */}
+        <div className="absolute w-full border-b-[1.5px] border-slate-300/50 z-10" style={{ bottom: '75.0%' }}></div>
+        <div className="absolute w-full border-b-[1.5px] border-slate-300/60 z-10" style={{ bottom: '50.0%' }}></div>
+        <div className="absolute w-full border-b-[1.5px] border-slate-800/10 z-10" style={{ bottom: '25.0%' }}></div>
 
         {/* 動態水位容器 */}
         <div 
@@ -264,7 +264,6 @@ const ExecutionModal = ({ isOpen, onClose, data, checks, onToggleCheck }) => {
     </div>
   );
 };
-
 
 export default function App() {
   const defaultUrl = 'https://script.google.com/macros/s/AKfycbzc659ptYc81-Gb24ws_8ZFDzRQ5yks-zmGNxoHFwJH5ZhIamVYHCp7yjZsewE0IMbHEQ/exec';
@@ -498,7 +497,7 @@ export default function App() {
                   >
                     {displayTicker}
                   </span>
-                  {/* 將「現價」縮簡為「現」，騰出更多空間 */}
+                  {/* 將「現價」縮減為「現」，更精簡俐落 */}
                   <span className="text-[11px] sm:text-sm font-bold text-slate-500 mt-0.5 truncate">
                     現 {item.currentPrice > 0 ? item.currentPrice.toFixed(2) : 'N/A'}
                   </span>
@@ -554,9 +553,9 @@ export default function App() {
                   </div>
                 ) : nextTarget ? (
                   <div className="bg-slate-50 border border-slate-100 rounded-xl p-2 sm:px-3 sm:py-2 flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] mt-1">
-                    {/* 左側三行置中區塊：放大的 NEXT + 無背景色的 2025/4 + 50% */}
+                    {/* 左側三行置中區塊：放大的 NEXT (與數字同色) + 無背景色的 2025/4 + 50% */}
                     <div className="flex flex-col items-center justify-center min-w-[64px] sm:min-w-[72px] shrink-0">
-                      <span className="text-sm sm:text-base font-black text-slate-400 uppercase tracking-widest leading-none mb-1">NEXT</span>
+                      <span className="text-sm sm:text-base font-black text-slate-700 uppercase tracking-widest leading-none mb-1">NEXT</span>
                       <div className="flex flex-col items-center justify-center w-full">
                         <span className={`text-[10px] sm:text-[11px] font-bold leading-tight tracking-wider ${nextTarget.type === '2025' ? 'text-blue-500' : 'text-teal-600'}`}>
                           {nextTarget.type === '2025' ? '2025/4' : '2022/10'}
@@ -566,9 +565,9 @@ export default function App() {
                         </span>
                       </div>
                     </div>
-                    {/* 右側目標價放大並置中偏右 */}
-                    <div className="flex items-center pl-2">
-                      <span className="text-xl sm:text-2xl font-black text-slate-700 tracking-tight">
+                    {/* 右側目標價稍微縮小並置中偏右，防溢出 */}
+                    <div className="flex items-center pl-2 min-w-0">
+                      <span className="text-lg sm:text-xl font-black text-slate-700 tracking-tight truncate">
                         {nextTarget.price.toFixed(2)}
                       </span>
                     </div>
