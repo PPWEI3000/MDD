@@ -192,7 +192,6 @@ export default function App() {
   };
 
   return (
-    {/* 將最外層背景改為 bg-slate-900 (Dark Mode) */}
     <div className="min-h-screen bg-slate-900 p-3 sm:p-6 md:p-8 font-sans pb-16 transition-colors duration-300">
       <style>{styles}</style>
       
@@ -215,7 +214,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* 控制區 (配合 Dark Mode 改為深灰色卡片，讓下方純白卡片更凸顯) */}
+      {/* 控制區 (配合 Dark Mode 改為深灰色卡片) */}
       <div className="max-w-7xl mx-auto mb-6 sm:mb-10 bg-slate-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-700">
         <label className="block text-xs sm:text-sm font-bold text-slate-300 mb-2 flex items-center gap-1 sm:gap-2">
           <LinkIcon className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400" />
