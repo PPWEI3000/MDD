@@ -307,12 +307,13 @@ export default function App() {
         };
 
         const ticker = values[0];
-        // 支援包含逗號的字串轉換數字
+        // 支援包含逗號的字串轉換數字 (現價在 Index 1)
         const currentPrice = values[1] ? parseFloat(values[1].toString().replace(/,/g, '')) : 0;
         
-        const dd2022 = parsePercent(values[5]);
-        const dd2025 = parsePercent(values[10]);
-        const dd2026 = parsePercent(values[15]);
+        // 配合新欄位順序，將跌幅的索引值往後遞延
+        const dd2022 = parsePercent(values[6]);  // 原本是 5 -> 現在是 6
+        const dd2025 = parsePercent(values[11]); // 原本是 10 -> 現在是 11
+        const dd2026 = parsePercent(values[16]); // 原本是 15 -> 現在是 16
 
         return {
           ticker: ticker,
