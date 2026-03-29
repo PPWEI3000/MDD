@@ -508,6 +508,10 @@ export default function App() {
                   >
                     {displayTicker}
                   </span>
+                  {/* 新增：將現價直接顯示在標的名稱正下方 */}
+                  <span className="text-[11px] sm:text-sm font-bold text-slate-500 mt-0.5 truncate">
+                    現價 {item.currentPrice > 0 ? item.currentPrice.toFixed(2) : 'N/A'}
+                  </span>
                 </div>
                 
                 <div className="flex flex-col items-end shrink-0">
@@ -557,18 +561,25 @@ export default function App() {
                 {nextTarget === 'ALL_COMPLETED' ? (
                   <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 flex items-center justify-center shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] gap-2 mt-1">
                     <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500" />
-                    <span className="text-sm sm:text-base font-bold text-emerald-700 tracking-tight">全部目標已完成</span>
+                    <span className="text-sm sm:text-base font-bold text-emerald-700 tracking-tight">全部達標</span>
                   </div>
                 ) : nextTarget ? (
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] mt-1">
-                    <div className="flex flex-col items-start gap-1">
-                      <span className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">NEXT</span>
-                      <span className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md leading-none ${nextTarget.type === '2025' ? 'bg-blue-100 text-blue-800' : 'bg-teal-100 text-teal-800'}`}>
-                        {nextTarget.type} {nextTarget.percent}%
-                      </span>
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-2 sm:px-3 sm:py-2 flex items-center justify-between shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] mt-1">
+                    {/* 左側三行置中區塊：NEXT + 2025/04 + 50% */}
+                    <div className="flex flex-col items-center justify-center min-w-[64px] sm:min-w-[72px] shrink-0">
+                      <span className="text-[10px] sm:text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">NEXT</span>
+                      <div className={`flex flex-col items-center justify-center px-2 py-1 rounded-md w-full ${nextTarget.type === '2025' ? 'bg-blue-100 text-blue-800' : 'bg-teal-100 text-teal-800'}`}>
+                        <span className="text-[9px] sm:text-[10px] font-bold leading-tight tracking-wider">
+                          {nextTarget.type === '2025' ? '2025/04' : '2022/10'}
+                        </span>
+                        <span className="text-[11px] sm:text-xs font-black leading-tight mt-0.5">
+                          {nextTarget.percent}%
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <span className="text-lg sm:text-xl font-black text-slate-700 tracking-tight">
+                    {/* 右側目標價放大並置中偏右 */}
+                    <div className="flex items-center pl-2">
+                      <span className="text-xl sm:text-2xl font-black text-slate-700 tracking-tight">
                         {nextTarget.price.toFixed(2)}
                       </span>
                     </div>
