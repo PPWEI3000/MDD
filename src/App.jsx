@@ -192,31 +192,32 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 p-3 sm:p-6 md:p-8 font-sans pb-16">
+    {/* 將最外層背景改為 bg-slate-900 (Dark Mode) */}
+    <div className="min-h-screen bg-slate-900 p-3 sm:p-6 md:p-8 font-sans pb-16 transition-colors duration-300">
       <style>{styles}</style>
       
-      {/* 標題與說明區 */}
+      {/* 標題與說明區 (配合 Dark Mode 將文字變亮) */}
       <div className="max-w-7xl mx-auto mb-6 sm:mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-800 flex items-center gap-2 sm:gap-3">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-100 flex items-center gap-2 sm:gap-3">
             <Droplets className="text-blue-500 w-6 h-6 sm:w-8 sm:h-8" />
             股市 MDD 戰情室
           </h1>
-          <p className="text-sm sm:text-base text-slate-500 mt-1 sm:mt-2 font-medium">即時連線 Google Sheet，追蹤加碼水位 🎯</p>
+          <p className="text-sm sm:text-base text-slate-400 mt-1 sm:mt-2 font-medium">即時連線 Google Sheet，追蹤加碼水位 🎯</p>
         </div>
 
         <div className="bg-[#fef3c7] border border-[#fde68a] rounded-xl p-3 sm:p-4 shadow-sm max-w-sm transform rotate-1 hover:rotate-0 transition-transform relative hidden md:block">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-3 bg-red-400/20 rounded-full"></div>
-          <p className="text-slate-700 font-bold flex items-start gap-2 text-xs sm:text-sm leading-relaxed">
+          <p className="text-slate-800 font-bold flex items-start gap-2 text-xs sm:text-sm leading-relaxed">
             <Info className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 shrink-0 mt-0.5" />
             <span>備註：玻璃球內灰色橫線將球體等分為 4 格。水位依序代表歷史股災達成進度：<strong className="text-amber-700 mx-1">50%、66.7%、83.3%</strong>。</span>
           </p>
         </div>
       </div>
 
-      {/* 控制區 */}
-      <div className="max-w-7xl mx-auto mb-6 sm:mb-10 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200">
-        <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-2 flex items-center gap-1 sm:gap-2">
+      {/* 控制區 (配合 Dark Mode 改為深灰色卡片，讓下方純白卡片更凸顯) */}
+      <div className="max-w-7xl mx-auto mb-6 sm:mb-10 bg-slate-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-700">
+        <label className="block text-xs sm:text-sm font-bold text-slate-300 mb-2 flex items-center gap-1 sm:gap-2">
           <LinkIcon className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400" />
           輸入 Google Sheet CSV 發布連結 (請注意 Sheet 發布約有 5 分鐘延遲)
         </label>
@@ -225,7 +226,7 @@ export default function App() {
             type="text" 
             value={csvUrl}
             onChange={(e) => setCsvUrl(e.target.value)}
-            className="flex-1 px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-600 font-medium"
+            className="flex-1 px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-slate-900 border border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-slate-200 font-medium"
           />
           <button 
             onClick={() => fetchAndParseCSV(csvUrl)}
@@ -237,19 +238,19 @@ export default function App() {
           </button>
         </div>
         {error && (
-          <div className="mt-3 flex items-center gap-2 text-rose-500 text-xs sm:text-sm font-bold bg-rose-50 p-2 sm:p-3 rounded-lg">
+          <div className="mt-3 flex items-center gap-2 text-rose-400 text-xs sm:text-sm font-bold bg-rose-900/40 p-2 sm:p-3 rounded-lg border border-rose-800/50">
             <AlertCircle className="w-4 h-4" />
             {error}
           </div>
         )}
       </div>
 
-      {/* 標的卡片網格 */}
+      {/* 標的卡片網格 (維持白底) */}
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
         {data.map((item, index) => (
           <div 
             key={`${item.ticker}-${index}`}
-            className="bg-white rounded-[1.2rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+            className="bg-white rounded-[1.2rem] sm:rounded-[2rem] p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
           >
             {/* 上半部：標的名稱 (左) 與 目前跌幅區塊 (右) */}
             <div className="flex justify-between items-center mb-4 sm:mb-6">
@@ -261,9 +262,9 @@ export default function App() {
                 </span>
               </div>
               
-              {/* 右側：將 2026 DD% 放在數字上方 */}
+              {/* 右側：將 2026 DD% 放大並加深顏色 (text-slate-600) */}
               <div className="flex flex-col items-end">
-                <span className="text-[9px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-widest mb-0.5">
                   2026 DD%
                 </span>
                 <div className="flex items-center gap-0.5 sm:gap-1 bg-rose-50 px-1.5 py-1 sm:px-2 sm:py-1 rounded-md">
